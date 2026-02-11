@@ -61,8 +61,8 @@ void AMRPlayerController::PreInitializeComponents()
 void AMRPlayerController::BeginPlay()
 {
 	Super::BeginPlay();
-	/*#if WITH_RPC_REGISTRY
-	FHttpServerModule::Get().StartAllListeners();
+	#if WITH_RPC_REGISTRY
+	/*FHttpServerModule::Get().StartAllListeners();
 	int32 RpcPort = 0;
 	if (FParse::Value(FCommandLine::Get(), TEXT("rpcport="), RpcPort))
 	{
@@ -72,8 +72,9 @@ void AMRPlayerController::BeginPlay()
 			ObjectInstance->RegisterAlwaysOnHttpCallbacks();
 			ObjectInstance->RegisterInMatchHttpCallbacks();
 		}
-	}
-	#endif*/
+	}*/
+	#endif
+	//UE_LOG(LogTemp, Warning, TEXT("PlayerController instantiate"));
 	SetActorHiddenInGame(false);
 }
 

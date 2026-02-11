@@ -14,7 +14,7 @@
 //#include "LyraAbilitySimpleFailureMessage.h"
 //#include "GameFramework/GameplayMessageSubsystem.h"
 #include "AbilitySystem/MRAbilitySourceInterface.h"
-//#include "AbilitySystem/LyraGameplayEffectContext.h"
+#include "AbilitySystem/MRGameplayEffectContext.h"
 //#include "Physics/PhysicalMaterialWithTags.h"
 #include "GameFramework/PlayerState.h"
 //#include "Camera/LyraCameraMode.h"
@@ -280,43 +280,43 @@ void UMRGameplayAbility::ApplyCost(const FGameplayAbilitySpecHandle Handle, cons
 	}
 }
 
-//FGameplayEffectContextHandle UMRGameplayAbility::MakeEffectContext(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo) const
-//{
-//	FGameplayEffectContextHandle ContextHandle = Super::MakeEffectContext(Handle, ActorInfo);
-//
-//	FMRGameplayEffectContext* EffectContext = FMRGameplayEffectContext::ExtractEffectContext(ContextHandle);
-//	check(EffectContext);
-//
-//	check(ActorInfo);
-//
-//	AActor* EffectCauser = nullptr;
-//	const IMRAbilitySourceInterface* AbilitySource = nullptr;
-//	float SourceLevel = 0.0f;
-//	GetAbilitySource(Handle, ActorInfo, /*out*/ SourceLevel, /*out*/ AbilitySource, /*out*/ EffectCauser);
-//
-//	UObject* SourceObject = GetSourceObject(Handle, ActorInfo);
-//
-//	AActor* Instigator = ActorInfo ? ActorInfo->OwnerActor.Get() : nullptr;
-//
-//	EffectContext->SetAbilitySource(AbilitySource, SourceLevel);
-//	EffectContext->AddInstigator(Instigator, EffectCauser);
-//	EffectContext->AddSourceObject(SourceObject);
-//
-//	return ContextHandle;
-//}
+FGameplayEffectContextHandle UMRGameplayAbility::MakeEffectContext(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo) const
+{
+	FGameplayEffectContextHandle ContextHandle = Super::MakeEffectContext(Handle, ActorInfo);
 
-//void UMRGameplayAbility::ApplyAbilityTagsToGameplayEffectSpec(FGameplayEffectSpec& Spec, FGameplayAbilitySpec* AbilitySpec) const
-//{
-//	Super::ApplyAbilityTagsToGameplayEffectSpec(Spec, AbilitySpec);
-//
-//	if (const FHitResult* HitResult = Spec.GetContext().GetHitResult())
-//	{
-//		if (const UPhysicalMaterialWithTags* PhysMatWithTags = Cast<const UPhysicalMaterialWithTags>(HitResult->PhysMaterial.Get()))
-//		{
-//			Spec.CapturedTargetTags.GetSpecTags().AppendTags(PhysMatWithTags->Tags);
-//		}
-//	}
-//}
+	FMRGameplayEffectContext* EffectContext = FMRGameplayEffectContext::ExtractEffectContext(ContextHandle);
+	check(EffectContext);
+
+	check(ActorInfo);
+
+	AActor* EffectCauser = nullptr;
+	const IMRAbilitySourceInterface* AbilitySource = nullptr;
+	float SourceLevel = 0.0f;
+	GetAbilitySource(Handle, ActorInfo, /*out*/ SourceLevel, /*out*/ AbilitySource, /*out*/ EffectCauser);
+
+	UObject* SourceObject = GetSourceObject(Handle, ActorInfo);
+
+	AActor* Instigator = ActorInfo ? ActorInfo->OwnerActor.Get() : nullptr;
+
+	EffectContext->SetAbilitySource(AbilitySource, SourceLevel);
+	EffectContext->AddInstigator(Instigator, EffectCauser);
+	EffectContext->AddSourceObject(SourceObject);
+
+	return ContextHandle;
+}
+
+void UMRGameplayAbility::ApplyAbilityTagsToGameplayEffectSpec(FGameplayEffectSpec& Spec, FGameplayAbilitySpec* AbilitySpec) const
+{
+	Super::ApplyAbilityTagsToGameplayEffectSpec(Spec, AbilitySpec);
+
+	if (const FHitResult* HitResult = Spec.GetContext().GetHitResult())
+	{
+		/*if (const UPhysicalMaterialWithTags* PhysMatWithTags = Cast<const UPhysicalMaterialWithTags>(HitResult->PhysMaterial.Get()))
+		{
+			Spec.CapturedTargetTags.GetSpecTags().AppendTags(PhysMatWithTags->Tags);
+		}*/
+	}
+}
 
 bool UMRGameplayAbility::DoesAbilitySatisfyTagRequirements(const UAbilitySystemComponent& AbilitySystemComponent, const FGameplayTagContainer* SourceTags, const FGameplayTagContainer* TargetTags, OUT FGameplayTagContainer* OptionalRelevantTags) const
 {

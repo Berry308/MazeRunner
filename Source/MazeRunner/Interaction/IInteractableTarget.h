@@ -52,8 +52,22 @@
 //};
 #pragma endregion
 
+UENUM(BlueprintType)
+enum class EInteractTriggerType : uint8
+{
+	// Try to activate the ability when the input is triggered.
+	OnInputTriggered,
+
+	// Continually try to activate the ability while the input is active.
+	WhileInputActive,
+
+	// Try to activate the ability when an avatar is assigned.
+	OnSpawn
+};
+
+
 /**
-* 定义物体的最大可交互距离
+* 定义物体的最大可交互距离,交互触发类型等
 * 定义交互类型，是按下触发，还是松开触发，还是长按一定时间后触发
 */
 UINTERFACE(MinimalAPI)
@@ -74,5 +88,11 @@ public:
 
 	// 交互事件
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Interact")
-	void OnInteract();
+	void OnInteract_Press();
+
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Interact")
+	void OnInteract_Hold();
+
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Interact")
+	void OnInteract_Release();
 };

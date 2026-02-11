@@ -77,11 +77,12 @@ void UMaruEquipmentInstance::SpawnEquipmentActors(const TArray<FMaruEquipmentAct
 	if (APawn* OwningPawn = GetPawn())
 	{
 		USceneComponent* AttachTarget = OwningPawn->GetRootComponent();
-		USceneComponent* AttachTargetFirstPerson = OwningPawn->GetRootComponent();
 		if (ACharacter* Char = Cast<ACharacter>(OwningPawn))
 		{
 			AttachTarget = Char->GetMesh();
 		}
+
+		USceneComponent* AttachTargetFirstPerson = OwningPawn->GetRootComponent();
 		if (AMRCharacter* Char = Cast<AMRCharacter>(OwningPawn))
 		{
 			AttachTargetFirstPerson = Char->GetFirstPersonMesh();
@@ -89,6 +90,8 @@ void UMaruEquipmentInstance::SpawnEquipmentActors(const TArray<FMaruEquipmentAct
 
 		for (const FMaruEquipmentActorToSpawn& SpawnInfo : ActorsToSpawn)
 		{
+			//const FAttachmentTransformRules AttachmentRule(EAttachmentRule::SnapToTarget,false);
+
 			AActor* ThirdPersonNewActor = GetWorld()->SpawnActorDeferred<AActor>(SpawnInfo.ActorToSpawn, FTransform::Identity, OwningPawn);
 			ThirdPersonNewActor->FinishSpawning(FTransform::Identity, /*bIsDefaultTransform=*/ true);
 			if (USkeletalMeshComponent* MeshComp = ThirdPersonNewActor->FindComponentByClass<USkeletalMeshComponent>())
@@ -97,7 +100,7 @@ void UMaruEquipmentInstance::SpawnEquipmentActors(const TArray<FMaruEquipmentAct
 			}
 			ThirdPersonNewActor->SetActorRelativeTransform(SpawnInfo.AttachTransform);
 			ThirdPersonNewActor->AttachToComponent(AttachTarget, FAttachmentTransformRules::KeepRelativeTransform, SpawnInfo.AttachSocket);
-			
+
 			if (AttachTargetFirstPerson)
 			{
 				AActor* FirstPersonNewActor = GetWorld()->SpawnActorDeferred<AActor>(SpawnInfo.ActorToSpawn, FTransform::Identity, OwningPawn);

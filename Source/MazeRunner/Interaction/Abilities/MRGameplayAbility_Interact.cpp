@@ -6,6 +6,9 @@
 #include "Interaction/IInteractableTarget.h"
 //#include "Interaction/InteractionStatics.h"
 //#include "Interaction/Tasks/AbilityTask_GrantNearbyInteraction.h"
+#include "Abilities/Tasks/AbilityTask.h"
+#include "Abilities/Tasks/AbilityTask_WaitInputPress.h"
+#include "Abilities/Tasks/AbilityTask_WaitInputRelease.h"
 #include "NativeGameplayTags.h"
 #include "Player/MRPlayerController.h"
 #include "Camera/CameraComponent.h"
@@ -29,12 +32,10 @@ UMRGameplayAbility_Interact::UMRGameplayAbility_Interact(const FObjectInitialize
 	NetExecutionPolicy = EGameplayAbilityNetExecutionPolicy::LocalPredicted;
 }
 
-
-void UMRGameplayAbility_Interact::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData)
+//判断当前是否激活了交互能力，以及权威验证，获取当前可交互物体列表中选择的物体
+bool UMRGameplayAbility_Interact::CanActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayTagContainer* SourceTags, const FGameplayTagContainer* TargetTags, FGameplayTagContainer* OptionalRelevantTags) const
 {
-	UE_LOG(LogMRAbilitySystem, Warning, TEXT("%s is activating MRGameplayAbility_Interact"), *ActorInfo->OwnerActor->GetName());
-	Super::ActivateAbility(Handle, ActorInfo, ActivationInfo, TriggerEventData);
-
+	//或许可以设置一个是否激活玩家交互能力的bool值，以防不时之需
 	UAbilitySystemComponent* AbilitySystem = GetAbilitySystemComponentFromActorInfo();
 	if (AbilitySystem && AbilitySystem->GetOwnerRole() == ROLE_Authority)
 	{
@@ -42,40 +43,78 @@ void UMRGameplayAbility_Interact::ActivateAbility(const FGameplayAbilitySpecHand
 		AMRCharacter* Character = Cast<AMRCharacter>(ActorInfo->AvatarActor);
 		if (Character)
 		{
-			//判断是否指向了物体，做一个扫描检测并返回FHitResult
-			TArray<FHitResult> Hits;	
-			Hits = PerformTrace(Character);
-			if (!Hits.IsEmpty())
+			return true;
+		}
+		//else
+		//{
+		//	UE_LOG(LogMR, Warning, TEXT("%s UMRGameplayAbility_Interact Activate false1"), *ActorInfo->OwnerActor->GetName());
+		//}
+	}
+	//else
+	//{
+	//	UE_LOG(LogMR, Warning, TEXT("%s UMRGameplayAbility_Interact Activate false2"), *ActorInfo->OwnerActor->GetName());
+	//}
+
+	return false;
+}
+
+void UMRGameplayAbility_Interact::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData)
+{
+	UE_LOG(LogMRAbilitySystem, Warning, TEXT("%s is activating MRGameplayAbility_Interact"), *ActorInfo->OwnerActor->GetName());
+	Super::ActivateAbility(Handle, ActorInfo, ActivationInfo, TriggerEventData);
+
+	//判断是否能与某物体交互
+	AMRCharacter* Character = Cast<AMRCharacter>(ActorInfo->AvatarActor);
+	if (Character)
+	{
+		//判断是否指向了物体，做一个扫描检测并返回FHitResult
+		TArray<FHitResult> Hits;
+		Hits = PerformTrace(Character);
+		if (!Hits.IsEmpty())
+		{
+			//判断每个检测到的目标是否能被交互并添加到可交互物体数组中，注意要记得清空
+			for (FHitResult hit : Hits)
 			{
-				//判断每个检测到的目标是否能被交互
-				for (FHitResult hit : Hits)
+				AActor* HitTarget = hit.GetActor();
+				if (CanInteractWith(ActorInfo->AvatarActor.Get(), HitTarget))
 				{
-					AActor* HitTarget = hit.GetActor();
-					if (CanInteractWith(ActorInfo->AvatarActor.Get(), HitTarget))
-					{
-						TriggerInteraction(HitTarget);
-					}
-					else
-					{
-						UE_LOG(LogMR, Warning, TEXT("%s try interact with %s false"), *ActorInfo->OwnerActor->GetName(),*HitTarget->GetName());
-					}
+					TargetCanBeInteracted.Add(HitTarget);
 				}
 			}
 		}
-		else
-		{
-			UE_LOG(LogMR, Warning, TEXT("%s UMRGameplayAbility_Interact Activate false1"), *ActorInfo->OwnerActor->GetName());
-		}
+	}
+
+	if (TargetCanBeInteracted.IsEmpty())
+	{
+		UE_LOG(LogMRAbilitySystem, Warning, TEXT("Nothing can be interacted"));
+		EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, false, false);
 	}
 	else
 	{
-		UE_LOG(LogMR, Warning, TEXT("%s UMRGameplayAbility_Interact Activate false2"), *ActorInfo->OwnerActor->GetName());
+		//根据当前选择激活可交互物体，默认交互(后续要添加根据玩家的UI选择来激活对应的可交互物体)
+		if (bIsChosen)
+		{
+			TriggerInteraction();
+		}
+		else
+		{
+			CurrentTargetToInteractIndex = 0;
+			TriggerInteraction();
+		}
 	}
-
-	EndAbility(CurrentSpecHandle,CurrentActorInfo,CurrentActivationInfo,false,false);
 }
 
-TArray<FHitResult> UMRGameplayAbility_Interact::PerformTrace(AMRCharacter* InSourceActor)
+//清空所有可交互物体数组
+void UMRGameplayAbility_Interact::EndAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, bool bReplicateEndAbility, bool bWasCancelled)
+{
+	UE_LOG(LogMRAbilitySystem, Warning, TEXT("%s 's MRGameplayAbility_Interact is end"), *ActorInfo->OwnerActor->GetName());
+	TargetCanBeInteracted.Empty();
+	CurrentTargetToInteractIndex = 0;
+
+	Super::EndAbility(Handle, ActorInfo, ActivationInfo, bReplicateEndAbility, bWasCancelled);
+}
+
+TArray<FHitResult> UMRGameplayAbility_Interact::PerformTrace(AMRCharacter* InSourceActor) const
 {
 	TArray<FHitResult> HitResults;
 	UCameraComponent* CameraComp = InSourceActor->FindComponentByClass<UCameraComponent>();
@@ -112,7 +151,7 @@ TArray<FHitResult> UMRGameplayAbility_Interact::PerformTrace(AMRCharacter* InSou
 
 // 判断该物体是否实现了InteractableTarget接口,获取接口的最大可交互距离，
 // 计算能力发起者与该物体的距离并比较，判断是否可以触发交互事件
-bool UMRGameplayAbility_Interact::CanInteractWith(AActor* SourceActor, AActor* TargetToInteract)
+bool UMRGameplayAbility_Interact::CanInteractWith(AActor* SourceActor, AActor* TargetToInteract) const
 {
 	if (TargetToInteract && TargetToInteract->GetClass()->ImplementsInterface(UInteractableTarget::StaticClass()))
 	{
@@ -123,21 +162,54 @@ bool UMRGameplayAbility_Interact::CanInteractWith(AActor* SourceActor, AActor* T
 		{
 			return true;
 		}
-		else
-		{
-			UE_LOG(LogMR, Warning, TEXT("false1"));
-		}
 	}
 
 	return false;
 }
 
 
-void UMRGameplayAbility_Interact::TriggerInteraction(AActor* TargetToInteract)
+void UMRGameplayAbility_Interact::TriggerInteraction()
 {
-	if (TargetToInteract && TargetToInteract->GetClass()->ImplementsInterface(UInteractableTarget::StaticClass()))
-	{
-		IInteractableTarget::Execute_OnInteract(TargetToInteract);
-	}
+	UE_LOG(LogMRAbilitySystem, Warning, TEXT("MRGameplayAbility_Interact TriggerInteraction"));
+
+	//bTestAlreadyPressed 用于控制任务创建时是否检查输入按键是否已经处于按下状态，如果是true那么会立刻触发按下事件
+    //AbilityTask在创建过后会自动激活(此处我使用手动激活，因为实际测试中一直没有激活)，注意在函数内部定义的局部变量在函数结束后会被垃圾回收
+	PressTask = UAbilityTask_WaitInputPress::WaitInputPress(this, true);
+	PressTask->OnPress.AddDynamic(this, &UMRGameplayAbility_Interact::OnInputPressed);
+	PressTask->Activate();
+
+	ReleaseTask = UAbilityTask_WaitInputRelease::WaitInputRelease(this, true);
+	ReleaseTask->OnRelease.AddDynamic(this, &UMRGameplayAbility_Interact::OnInputReleased);
+	ReleaseTask->Activate();
+
+	//if (PressTask->IsActive())
+	//{
+	//	UE_LOG(LogMRAbilitySystem, Warning, TEXT("PressTask->IsActive"));
+	//}
+	//if (ReleaseTask->IsActive())
+	//{
+	//	UE_LOG(LogMRAbilitySystem, Warning, TEXT("ReleaseTask->IsActive"));
+	//}
+}
+
+void UMRGameplayAbility_Interact::OnInputPressed(float TimeWaited)
+{
+	UE_LOG(LogMRAbilitySystem, Warning, TEXT("MRGameplayAbility_Interact OnInputPressed"));
+
+	IInteractableTarget::Execute_OnInteract_Press(TargetCanBeInteracted[CurrentTargetToInteractIndex]);
+}
+
+void UMRGameplayAbility_Interact::OnInputHeld(float TimeWaited)
+{
+	IInteractableTarget::Execute_OnInteract_Hold(TargetCanBeInteracted[CurrentTargetToInteractIndex]);
+}
+
+void UMRGameplayAbility_Interact::OnInputReleased(float TimeWaited)
+{
+	UE_LOG(LogMRAbilitySystem, Warning, TEXT("MRGameplayAbility_Interact OnInputReleased"));
+
+	IInteractableTarget::Execute_OnInteract_Release(TargetCanBeInteracted[CurrentTargetToInteractIndex]);
+
+	EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, false, false);
 }
 
