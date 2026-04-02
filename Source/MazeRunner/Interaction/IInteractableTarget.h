@@ -82,17 +82,28 @@ class IInteractableTarget
 	GENERATED_BODY()
 
 public:
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Interact")
+	bool CanBeInteracted() const;
+	virtual bool CanBeInteracted_Implementation() const { return true;}
+
 	// Getter返回最大交互距离，蓝图/C++都可实现（用BlueprintNativeEvent）
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Interact")
 	float GetMaxInteractDistance() const;
 
+	//在可交互的时候（弹出可交互UI提示），单个可交互目标可能有多个可交互选项（尚不实现）
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Interact")
+	FText GetInteractablePrompt();
+
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Interact")
+	void OnInteractable();
+
 	// 交互事件
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Interact")
-	void OnInteract_Press();
+	void OnInteract_Press(ACharacter* Indicator);
 
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Interact")
-	void OnInteract_Hold();
+	void OnInteract_Hold(ACharacter* Indicator);
 
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Interact")
-	void OnInteract_Release();
+	void OnInteract_Release(ACharacter* Indicator);
 };

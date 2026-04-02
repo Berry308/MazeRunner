@@ -39,11 +39,11 @@ protected:
 	virtual void EndAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, bool bReplicateEndAbility, bool bWasCancelled) override;
 
 	//追踪多个可交互目标
-	UFUNCTION(BlueprintCallable)
-	TArray<FHitResult> PerformTrace(AMRCharacter* InSourceActor) const; 
+	//UFUNCTION(BlueprintCallable)
+	//TArray<FHitResult> PerformTrace(AMRCharacter* InSourceActor) const; 
 
-	UFUNCTION(BlueprintCallable)
-	bool CanInteractWith(AActor* SourceActor,AActor* TargetToInteract) const;
+	//UFUNCTION(BlueprintCallable)
+	//bool CanInteractWith(AActor* SourceActor,AActor* TargetToInteract) const;
 
 	UFUNCTION(BlueprintCallable)
 	void TriggerInteraction();
@@ -57,8 +57,8 @@ protected:
 	UFUNCTION()
 	void OnInputReleased(float TimeWaited);
 
-	UPROPERTY(EditDefaultsOnly)
-	float InteractSphereRadius = 10.f;
+	//UPROPERTY(EditDefaultsOnly)
+	//float InteractSphereRadius = 10.f;
 
 protected:
 	UPROPERTY()
@@ -68,7 +68,9 @@ protected:
 	UAbilityTask_WaitInputRelease* ReleaseTask;
 
 private:
-	TArray<AActor*> TargetCanBeInteracted;
+	AActor* CurrentTargetToInteract;
+
+	/*TArray<AActor*> TargetCanBeInteracted;
 	int8 CurrentTargetToInteractIndex;
-	bool bIsChosen=false;
+	bool bIsChosen=false;*/
 };

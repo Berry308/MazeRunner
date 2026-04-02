@@ -13,7 +13,7 @@
 
 //struct FGenericTeamId;
 
-class ALyraHUD;
+class AMaruHUD;
 class AMRPlayerState;
 class APawn;
 class APlayerState;
@@ -46,7 +46,13 @@ public:
 	 UMRAbilitySystemComponent* GetMRAbilitySystemComponent() const;
 
 	UFUNCTION(BlueprintCallable, Category = "MazeRunner|PlayerController")
-	 //ALyraHUD* GetMRHUD() const;
+	void SetUIInputMode(UUserWidget* WidgetToFocus);
+
+	UFUNCTION(BlueprintCallable, Category = "MazeRunner|PlayerController")
+	void SetGameInputMode();
+
+	UFUNCTION(BlueprintCallable, Category = "MazeRunner|PlayerController")
+	AMaruHUD* GetMaruHUD() const;
 
 	// Call from game state logic to start recording an automatic client replay if ShouldRecordClientReplay returns true
 	/*UFUNCTION(BlueprintCallable, Category = "Lyra|PlayerController")

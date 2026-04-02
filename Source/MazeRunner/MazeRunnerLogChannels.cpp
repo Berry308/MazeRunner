@@ -7,6 +7,7 @@ DEFINE_LOG_CATEGORY(LogMR);
 DEFINE_LOG_CATEGORY(LogMRExperience);
 DEFINE_LOG_CATEGORY(LogMRAbilitySystem);
 DEFINE_LOG_CATEGORY(LogMRTeams);
+DEFINE_LOG_CATEGORY(LogAI);
 
 FString GetClientServerContextString(UObject* ContextObject)
 {

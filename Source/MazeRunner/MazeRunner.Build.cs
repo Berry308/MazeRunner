@@ -25,7 +25,10 @@ public class MazeRunner : ModuleRules
             "GameplayTags",
 			"GameplayTasks",
 			"GameplayAbilities",
-			"NetCore"
+			"NetCore",
+			"HTTP",
+			"Json",
+			"JsonUtilities"
         });
 
 		PrivateDependencyModuleNames.AddRange(new string[] { });

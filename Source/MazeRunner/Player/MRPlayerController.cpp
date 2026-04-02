@@ -5,10 +5,11 @@
 //#include "CommonInputTypeEnum.h"
 #include "Components/PrimitiveComponent.h"
 #include "MazeRunnerLogChannels.h"
+#include "Blueprint/UserWidget.h"
 //#include "LyraCheatManager.h"
 #include "MRPlayerState.h"
 //#include "Camera/LyraPlayerCameraManager.h"
-//#include "UI/LyraHUD.h"
+#include "UI/MaruHUD.h"
 #include "AbilitySystem/MRAbilitySystemComponent.h"
 #include "EngineUtils.h"
 #include "MRGameplayTags.h"
@@ -47,7 +48,7 @@ AMRPlayerController::AMRPlayerController(const FObjectInitializer& ObjectInitial
 	: Super(ObjectInitializer)
 {
 	/*PlayerCameraManagerClass = ALyraPlayerCameraManager::StaticClass();*/
-
+	
 #if USING_CHEAT_MANAGER
 	CheatClass = ULyraCheatManager::StaticClass();
 #endif // #if USING_CHEAT_MANAGER
@@ -157,6 +158,33 @@ UMRAbilitySystemComponent* AMRPlayerController::GetMRAbilitySystemComponent() co
 {
 	const AMRPlayerState* MaruPS = GetMRPlayerState();
 	return (MaruPS ? MaruPS->GetMRAbilitySystemComponent() : nullptr);
+}
+
+void AMRPlayerController::SetUIInputMode(UUserWidget* WidgetToFocus)
+{
+	FInputModeUIOnly InputMode;
+	InputMode.SetWidgetToFocus(WidgetToFocus->TakeWidget()); // 锁定到指定Widget
+	InputMode.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock); // 鼠标释放
+
+	SetInputMode(InputMode);
+	bShowMouseCursor = true;
+}
+
+void AMRPlayerController::SetGameInputMode()
+{
+	FInputModeGameOnly InputMode;
+	SetInputMode(InputMode);
+	bShowMouseCursor = false;
+}
+
+AMaruHUD* AMRPlayerController::GetMaruHUD() const
+{
+	AMaruHUD* MaruHUD = Cast<AMaruHUD>(GetHUD());
+	if(MaruHUD)
+	{
+		return MaruHUD;
+	}
+	return nullptr;
 }
 
 //ALyraHUD* AMRPlayerController::GetMRHUD() const

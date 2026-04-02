@@ -199,6 +199,10 @@ protected:
 	 //用于内部判断是否能跳跃
 	 virtual bool CanJumpInternal_Implementation() const;
 
+public:
+	UPROPERTY(Editanywhere, BlueprintReadWrite, Category = "MazeRunner|Character")
+	FString CharacterFormalName;
+
 private:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "MazeRunner|Character", Meta = (AllowPrivateAccess = "true"))
