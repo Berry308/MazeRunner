@@ -14,4 +14,6 @@ class MAZERUNNER_API UNPCActionBase : public UAIActionBase
 {
 	GENERATED_BODY()
 	
+public:
+	virtual void Execute_Implementation() override;
 };

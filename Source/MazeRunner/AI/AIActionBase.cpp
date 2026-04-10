@@ -15,6 +15,6 @@ bool UAIActionBase::ConfigureFromParsedParams(const TMap<FString, FString>& RawP
 
 void UAIActionBase::Execute_Implementation()
 {
-
+	bIsExecuting = true;
 }
 

@@ -29,17 +29,13 @@ struct FPerceptionInfo
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TObjectPtr<AActor> Instigator;
-
 	// 发起者昵称/姓名（用于发起者 Actor 销毁后仍可追溯交互来源）
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FString InstigatorName;
-
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TObjectPtr<AActor> Receiver;
-
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	ESense Sense;
-	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FString Message;//具体的字符串信息
 };

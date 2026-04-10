@@ -29,6 +29,23 @@ USpeakInworldComponent::USpeakInworldComponent()
 void USpeakInworldComponent::BeginPlay()
 {
 	Super::BeginPlay();
+
+}
+
+void USpeakInworldComponent::OnRegister()
+{
+    Super::OnRegister();
+
+    // 强制 InternalWidgetComp 重新挂载并更新偏移（WidgetRelativeOffset建议仍用UPROPERTY管理）
+    if (InternalWidgetComp)
+    {
+        // 只要不是已挂载的，重新Attach
+        if (InternalWidgetComp->GetAttachParent() != this)
+        {
+            InternalWidgetComp->AttachToComponent(this, FAttachmentTransformRules::KeepRelativeTransform);
+        }
+        InternalWidgetComp->SetMobility(EComponentMobility::Movable);  // 避免父子mobility不匹配
+    }
 }
 
 
@@ -37,7 +54,7 @@ void USpeakInworldComponent::TickComponent(float DeltaTime, ELevelTick TickType,
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
-    // Billboarding 逻辑：始终朝向摄像机
+    //始终朝向摄像机
     if (InternalWidgetComp && InternalWidgetComp->IsVisible())
     {
         APlayerCameraManager* CamManager = UGameplayStatics::GetPlayerCameraManager(GetWorld(), 0);
@@ -55,7 +72,12 @@ void USpeakInworldComponent::TickComponent(float DeltaTime, ELevelTick TickType,
 
 void USpeakInworldComponent::AddSpeakContentAndSpeak(const FString& Content)
 {
-    if (!InternalWidgetComp) return;
+    UE_LOG(LogTemp, Log, TEXT("SpeakInworldComponent: Adding content to speak queue: %s"), *Content);
+    if (!InternalWidgetComp)
+    {
+		UE_LOG(LogTemp, Warning, TEXT("SpeakInworldComponent: InternalWidgetComp is null, cannot add speak content."));
+        return;
+    }
 
 	SpeakContentQueue.Add(Content);
 
@@ -68,6 +90,7 @@ void USpeakInworldComponent::AddSpeakContentAndSpeak(const FString& Content)
 
 void USpeakInworldComponent::UpdateSpeakUI()
 {
+    UE_LOG(LogTemp, Log, TEXT("SpeakInworldComponent: UpdateSpeakUI"));
     //如果当前队列中还有内容，继续显示下一条
     if (!SpeakContentQueue.IsEmpty())
     {

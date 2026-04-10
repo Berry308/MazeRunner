@@ -57,8 +57,11 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void AddActionToQueue(UAIActionBase* Action);
 
-	//对于这个Tick组件，每帧需要检测当前是否有需要执行的Action，不知道会不会浪费性能，先这样写了
-	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
+	UFUNCTION(BlueprintCallable)
+	void UpdateActionQueue();
+
+	UFUNCTION()
+	void OnCurrentActionFinished();
 
 protected:
 	UPROPERTY(EditAnywhere)

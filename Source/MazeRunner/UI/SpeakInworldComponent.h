@@ -20,17 +20,20 @@ public:
 	// Sets default values for this component's properties
 	USpeakInworldComponent();
 
-protected:
-	// Called when the game starts
-	virtual void BeginPlay() override;
-
-public:	
-	// Called every frame
-	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
+	static USpeakInworldComponent* FindSpeakInworldComponent(const AActor* Actor) { return (Actor ? Actor->FindComponentByClass<USpeakInworldComponent>() : nullptr); }
 
     /** 添加Speak的内容到列表中，并在游戏中Speak */
     UFUNCTION(BlueprintCallable, Category = "Dialogue")
     void AddSpeakContentAndSpeak(const FString& Content);
+
+protected:
+	// Called when the game starts
+	virtual void BeginPlay() override;
+    virtual void OnRegister() override;
+
+public:	
+	// Called every frame
+	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
 private:
     /** 内部持有的渲染组件 */
@@ -40,6 +43,7 @@ private:
     /** 定时器句柄，用于控制消失逻辑 */
     FTimerHandle SpeakTimerHandle;
 
+    //在此处使用TArray维护FString，实际上可以使用TQueue优化
     TArray<FString> SpeakContentQueue;
 
     /** 根据当前SpeakContentQueue是否有内容来更新UI显示 */

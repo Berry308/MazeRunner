@@ -26,6 +26,9 @@ public:
 	UFUNCTION(BlueprintPure, Category = "AI|Action")
 	const APawn* GetOwnerPawn() { return OwnerPawn; }
 
+	UFUNCTION(BlueprintCallable, Category = "AI|Action")
+	bool IsExecuting() const { return bIsExecuting; }
+
 	/**
 	 * 用解析得到的键值填充行为参数；键应与对应 FAIActionInfo 里声明的 FieldName 一致。
 	 * （不使用 UFUNCTION：TMap 不能暴露给蓝图反射。子类在 C++ 中 override。）
@@ -49,4 +52,6 @@ public:
 protected:
 	UPROPERTY(BlueprintReadOnly, Transient, Category = "AI|Action")
 	APawn* OwnerPawn = nullptr;
+private:
+	bool bIsExecuting = false;
 };

@@ -136,7 +136,7 @@ void UMRGameplayAbility_Interact::EndAbility(const FGameplayAbilitySpecHandle Ha
 
 void UMRGameplayAbility_Interact::TriggerInteraction()
 {
-	UE_LOG(LogMRAbilitySystem, Warning, TEXT("MRGameplayAbility_Interact TriggerInteraction"));
+	//UE_LOG(LogMRAbilitySystem, Warning, TEXT("MRGameplayAbility_Interact TriggerInteraction"));
 
 	//bTestAlreadyPressed 用于控制任务创建时是否检查输入按键是否已经处于按下状态，如果是true那么会立刻触发按下事件
     //AbilityTask在创建过后会自动激活(此处我使用手动激活，因为实际测试中一直没有激活)，注意在函数内部定义的局部变量在函数结束后会被垃圾回收
@@ -160,7 +160,7 @@ void UMRGameplayAbility_Interact::TriggerInteraction()
 
 void UMRGameplayAbility_Interact::OnInputPressed(float TimeWaited)
 {
-	UE_LOG(LogMRAbilitySystem, Warning, TEXT("MRGameplayAbility_Interact OnInputPressed"));
+	//UE_LOG(LogMRAbilitySystem, Warning, TEXT("MRGameplayAbility_Interact OnInputPressed"));
 
 	// 获得发起者角色
 	ACharacter* Initiator = Cast<ACharacter>(GetActorInfo().AvatarActor);
@@ -184,7 +184,7 @@ void UMRGameplayAbility_Interact::OnInputHeld(float TimeWaited)
 
 void UMRGameplayAbility_Interact::OnInputReleased(float TimeWaited)
 {
-	UE_LOG(LogMRAbilitySystem, Warning, TEXT("MRGameplayAbility_Interact OnInputReleased"));
+	//UE_LOG(LogMRAbilitySystem, Warning, TEXT("MRGameplayAbility_Interact OnInputReleased"));
 
 	// 获得发起者角色
 	ACharacter* Initiator = Cast<ACharacter>(GetActorInfo().AvatarActor);
