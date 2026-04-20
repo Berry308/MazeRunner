@@ -33,6 +33,11 @@ void UActionComponent::UpdateActionQueue()
             CurrentAction->Execute();
         }
     }
+    else if (ActionList.Num() == 0)
+    {
+        UE_LOG(LogTemp, Warning, TEXT("UActionComponent::UpdateActionQueue: 当前行为列表为空"));
+        OnActionListEmpty.Broadcast();
+    }
 }
 
 void UActionComponent::OnCurrentActionFinished()
@@ -43,4 +48,10 @@ void UActionComponent::OnCurrentActionFinished()
         CurrentAction = nullptr;
     }
     UpdateActionQueue();
+}
+
+//清空行动队列
+void UActionComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+    OnActionListEmpty.Clear();
 }

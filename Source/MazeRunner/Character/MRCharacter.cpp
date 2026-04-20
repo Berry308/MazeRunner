@@ -46,6 +46,10 @@ AMRCharacter::AMRCharacter(const FObjectInitializer& ObjectInitializer)
 	check(MeshComp);
 	MeshComp->SetRelativeRotation(FRotator(0.0f, -90.0f, 0.0f));  // Rotate mesh to be X forward since it is exported as Y forward.
 	MeshComp->SetCollisionProfileName(NAME_MRCharacterCollisionProfile_Mesh);
+	MeshComp->SetOwnerNoSee(true);
+	MeshComp->CastShadow = true;
+	MeshComp->bCastHiddenShadow = true;
+	MeshComp->FirstPersonPrimitiveType = EFirstPersonPrimitiveType::WorldSpaceRepresentation;
 
 	UMRCharacterMovementComponent* MaruMoveComp = CastChecked<UMRCharacterMovementComponent>(GetCharacterMovement());
 	MaruMoveComp->GravityScale = 1.0f;
@@ -74,6 +78,8 @@ AMRCharacter::AMRCharacter(const FObjectInitializer& ObjectInitializer)
 	FirstPersonMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("First Person Mesh"));
 	FirstPersonMesh->SetupAttachment(GetMesh());
 	FirstPersonMesh->SetOnlyOwnerSee(true);
+	FirstPersonMesh->SetCastShadow(false);
+	FirstPersonMesh->bCastDynamicShadow = false;
 	FirstPersonMesh->FirstPersonPrimitiveType = EFirstPersonPrimitiveType::FirstPerson;
 	FirstPersonMesh->SetCollisionProfileName(FName("NoCollision"));
 
@@ -86,10 +92,6 @@ AMRCharacter::AMRCharacter(const FObjectInitializer& ObjectInitializer)
 	FirstPersonCameraComponent->bEnableFirstPersonScale = true;
 	FirstPersonCameraComponent->FirstPersonFieldOfView = 90.0f;
 	FirstPersonCameraComponent->FirstPersonScale = 0.6f;
-
-	// configure the character comps
-	GetMesh()->SetOwnerNoSee(true);
-	GetMesh()->FirstPersonPrimitiveType = EFirstPersonPrimitiveType::WorldSpaceRepresentation;
 
 	/*FirstPersonCameraComponent = CreateDefaultSubobject<UCameraComponent>(TEXT("FirstPersonCamera"));
 	check(FirstPersonCameraComponent);

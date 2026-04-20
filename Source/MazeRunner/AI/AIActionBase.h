@@ -40,6 +40,9 @@ public:
 	void Execute();
 	virtual void Execute_Implementation();
 
+protected:
+	virtual void BeginDestroy() override;
+
 public:
 	// 行为优先级，数值越大优先级越高
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI")

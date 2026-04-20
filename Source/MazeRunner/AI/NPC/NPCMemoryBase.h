@@ -76,7 +76,7 @@ struct FMemoryLocationCognition
     FString LocationName;
     UPROPERTY(EditAnywhere, Category = "Memory")
     FString Description;
-    UPROPERTY(EditAnywhere, Category = "Memory")
+    UPROPERTY(EditAnywhere, BlueprintReadWrite,Category = "Memory")
     FVector LocationCoordinates; // 地点的坐标信息
 };
 

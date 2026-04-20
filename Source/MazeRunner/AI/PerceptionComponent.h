@@ -52,18 +52,25 @@ public:
 	UFUNCTION(BlueprintPure)
 	static UPerceptionComponent* FindPerceptionComponent(const AActor* Actor) { return Actor ? Actor->FindComponentByClass<UPerceptionComponent>() : nullptr; }
 
-	//接收玩家的文字输入，转换为听觉信息，调用DeliverMessageToCognition
-	/*UFUNCTION(BlueprintCallable)
-	void ReceivePlayerMessageInput(const FString& PlayerMessage);*/
+	//PerceptionComponent只要不调用使用语言模型的函数，就可以达到禁用语言模型的效果
+	UFUNCTION(BlueprintCallable)
+	void SetIsUseLanguageModel(bool isUseLanguageModel) { bIsUseLanguageModel = isUseLanguageModel; }
+	UFUNCTION(BlueprintPure)
+	bool GetIsUseLanguageModel() { return bIsUseLanguageModel; }
 
+
+#pragma region LanguageModelDrive
+public:
 	//接收带发起者信息的玩家消息：在发起者销毁后仍能追溯交互来源
 	UFUNCTION(BlueprintCallable)
-	void ReceivePlayerMessageInputFromActor(AActor* Player, const FString& PlayerNickname, const FString& PlayerMessage);
+	bool ReceivePlayerMessageInputFromActor(AActor* Player, const FString& PlayerNickname, const FString& PlayerMessage);
 
+protected:
 	//将感知到的信息传递给Cognition组件
 	UFUNCTION(BlueprintCallable)
 	void DeliverMessageToCognition(const FPerceptionInfo& PerceptionInfo);
 
-	//UFUNCTION(BlueprintCallable)
-	//void OnEnvironmentChanged();
+private:
+	bool bIsUseLanguageModel=false;
+#pragma endregion
 };

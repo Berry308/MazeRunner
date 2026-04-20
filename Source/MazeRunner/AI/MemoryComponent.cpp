@@ -2,7 +2,6 @@
 
 
 #include "AI/MemoryComponent.h"
-#include "AI/NPC/NPCMemoryBase.h"
 #include "AI/NPC/NPCMemoryPreset.h"
 #include "AI/CognitionComponent.h"
 #include "Character/MRCharacter.h"
@@ -35,6 +34,22 @@ void UMemoryComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
     Super::EndPlay(EndPlayReason);
 	SaveMemoryToDisk(); // 游戏结束时保存当前记忆
+}
+
+TArray<FMemoryLocationCognition> UMemoryComponent::GetLocationCognition() const
+{
+    TArray<FMemoryLocationCognition> result;
+
+    if (ActiveMemoryData)
+    {
+        for (const TPair<FString, FMemoryLocationCognition>& LocationMemory : ActiveMemoryData->LocationCognitions)
+        {
+            result.Add(LocationMemory.Value);
+        }
+    }
+    if (result.IsEmpty()) UE_LOG(LogAI, Warning, TEXT("UMemoryComponent::GetLocationCognition failed"));
+
+    return result;
 }
 
 FString UMemoryComponent::GetSummarizedShortTermMemoryName()
@@ -184,6 +199,10 @@ void UMemoryComponent::LoadMemoryFromDisk()
     if (UGameplayStatics::DoesSaveGameExist(SaveSlotName, 0))
     {
         ActiveMemoryData = Cast<UNPCMemoryBase>(UGameplayStatics::LoadGameFromSlot(SaveSlotName, 0));
+    }
+    else
+    {
+        UE_LOG(LogAI, Warning, TEXT("SaveSlotName:%s does not exist"), *SaveSlotName);
     }
 
     // 如果没有存档，则创建一个新的空对象，并将记忆预设注入

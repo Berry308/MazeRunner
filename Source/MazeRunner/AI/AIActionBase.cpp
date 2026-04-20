@@ -18,3 +18,10 @@ void UAIActionBase::Execute_Implementation()
 	bIsExecuting = true;
 }
 
+void UAIActionBase::BeginDestroy()
+{
+	OnActionFinished.Clear();
+
+	Super::BeginDestroy();
+}
+

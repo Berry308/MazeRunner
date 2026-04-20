@@ -5,9 +5,9 @@
 #include "CoreMinimal.h"
 #include "Components/PawnComponent.h"
 #include "Containers/Queue.h"
+#include "NPC/NPCMemoryBase.h"
 #include "MemoryComponent.generated.h"
 
-class UNPCMemoryBase;
 class UNPCMemoryPreset;
 struct FMemoryPersonalInfo;
 struct FPerceptionInfo;
@@ -30,6 +30,9 @@ public:
 
     UFUNCTION(BlueprintCallable)
     TArray<FString> GetShortTermMemory() const { return ShortTermMemories; }
+
+    UFUNCTION(BlueprintCallable)
+    TArray<FMemoryLocationCognition> GetLocationCognition() const;
 
     UFUNCTION()
     FString GetSummarizedShortTermMemoryName();

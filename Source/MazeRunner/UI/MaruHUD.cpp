@@ -13,7 +13,7 @@ void AMaruHUD::PushWidget(UUserWidget* NewWidget)
     // 2. 压入 TArray (等同于 Stack Push)
     WidgetStack.Push(NewWidget);
 
-    // 3. 更新输入模式，消除 (Eliminate) 鼠标锁定
+    // 3. 更新输入模式，清除鼠标锁定
     RefreshInputMode();
 }
 

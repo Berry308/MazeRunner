@@ -7,6 +7,8 @@
 #include "AI/AIActionBase.h"
 #include "ActionComponent.generated.h"
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnActionListEmpty);
+
 USTRUCT(BlueprintType)
 struct MAZERUNNER_API FAIActionInfoField
 {
@@ -49,6 +51,10 @@ public:
 	UFUNCTION(BlueprintCallable)
 	static UActionComponent* FindActionComponent(const AActor* Actor){return (Actor ? Actor->FindComponentByClass<UActionComponent>() : nullptr);}
 
+	//是否当前Action队列为空并且没有正在执行的Action
+	UFUNCTION(BlueprintCallable)
+	bool IsExecutingAction() const { return CurrentAction != nullptr; }
+
 	//获取当前可以执行的Action队列
 	UFUNCTION(BlueprintCallable)
 	const TArray<FAIActionInfo>& GetAllowedActionInfor() const{return ActionInfos;};
@@ -62,6 +68,12 @@ public:
 
 	UFUNCTION()
 	void OnCurrentActionFinished();
+protected:
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
+
+public:
+	UPROPERTY(BlueprintAssignable)
+	FOnActionListEmpty OnActionListEmpty;
 
 protected:
 	UPROPERTY(EditAnywhere)
@@ -71,5 +83,6 @@ protected:
 	UAIActionBase* CurrentAction;
 
 	// 可用带优先级的队列维护待执行 Action；未定型前先用 TArray，避免无效的标准库包含与不完整模板形参
+	UPROPERTY()
 	TArray<UAIActionBase*> ActionList;
 };
