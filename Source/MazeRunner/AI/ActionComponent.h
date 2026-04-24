@@ -14,10 +14,10 @@ struct MAZERUNNER_API FAIActionInfoField
 {
 	GENERATED_BODY()
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AIAction")
 	FString FieldName;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AIAction")
 	FString Description;
 };
 
@@ -26,13 +26,13 @@ struct MAZERUNNER_API FAIActionInfo
 {
 	GENERATED_BODY()
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AIAction")
 	FString ActionName;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AIAction")
 	FString Description;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AIAction")
 	TArray<FAIActionInfoField> Fields;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI")
@@ -76,7 +76,7 @@ public:
 	FOnActionListEmpty OnActionListEmpty;
 
 protected:
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, Category = "ActionConfig")
 	TArray<FAIActionInfo> ActionInfos;
 
 	UPROPERTY()

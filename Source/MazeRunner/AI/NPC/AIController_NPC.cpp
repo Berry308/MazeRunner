@@ -81,13 +81,13 @@ void AAIController_NPC::OnPerceptionUpdate(AActor* Actor, FAIStimulus Stimulus)
             {
                 UE_LOG(LogTemp, Log, TEXT("Player detected: %s"), *Actor->GetName());
                 //延迟启用NPC的本地模型Agent进行决策和行为选择
-                //GetWorldTimerManager().SetTimer(
-                //    LMSwitchDelayTimerHandle,
-                //    this,
-                //    &AAIController_NPC::StartLanguageModelDrive,
-                //    LanguageModelSwitchDelay,//默认为3s
-                //    false
-                //);
+                GetWorldTimerManager().SetTimer(
+                    LMSwitchDelayTimerHandle,
+                    this,
+                    &AAIController_NPC::StartLanguageModelDrive,
+                    LanguageModelSwitchDelay,//默认为3s
+                    false
+                );
             }
             else//玩家离开NPC检测范围内时，清除计时器
             {
@@ -103,7 +103,7 @@ void AAIController_NPC::OnPerceptionUpdate(AActor* Actor, FAIStimulus Stimulus)
 
 void AAIController_NPC::RestartBehaviorTree()
 {
-	UE_LOG(LogAI, Warning, TEXT("AAIController_NPC::RestartBehaviorTree"));
+	UE_LOG(LogAI, Log, TEXT("AAIController_NPC::RestartBehaviorTree"));
     if (GetBrainComponent()) 
     {
         GetBrainComponent()->RestartLogic(); 
@@ -112,7 +112,7 @@ void AAIController_NPC::RestartBehaviorTree()
 
 void AAIController_NPC::StopBehaviorTree(FString StopReason)
 {
-	UE_LOG(LogAI, Warning, TEXT("AAIController_NPC::StopBehaviorTree, reason: %s"), *StopReason);
+	UE_LOG(LogAI, Log, TEXT("AAIController_NPC::StopBehaviorTree, reason: %s"), *StopReason);
     if (GetBrainComponent())
     {
         GetBrainComponent()->StopLogic(StopReason);
@@ -123,18 +123,22 @@ void AAIController_NPC::StartLanguageModelDrive()
 {
     //在启用前，判断当前是否有空闲模型可以请求
     UNPCManagerSubsystem* NPCManager = GetGameInstance()->GetSubsystem<UNPCManagerSubsystem>();
+	if (NPCManager == nullptr) 
+    {
+        UE_LOG(LogAI, Error, TEXT("AAIController_NPC::StartLanguageModelDrive: NPCManagerSubsystem not found"));
+        return;
+	}
     if (NPCManager->GetIsLanguageModelAvailable())
     {
-        UE_LOG(LogAI, Warning, TEXT("AAIController_NPC::StartLanguageModelDrive"));
-        NPCManager->SetIsLanguageModelAvailable(false);
+        UE_LOG(LogAI, Log, TEXT("AAIController_NPC::StartLanguageModelDrive"));
+        //NPCManager->SetIsLanguageModelAvailable(false);//在此处占用模型资源的话不太合适？
         bIsUsingLanguageModel = true;
         //停止行为树，并启用NPC的Agent
         StopBehaviorTree(TEXT("SwitchControlMode to SLM"));
         if (NPCPerceptionComponent)
         {
             NPCPerceptionComponent->SetIsUseLanguageModel(true);
-            //TODO:此时需要主动传递NPC遇到玩家的感知信息给CognitionComponent让其调用模型作出应答
-            
+            //此时需要主动传递NPC遇到玩家的感知信息给CognitionComponent让其调用模型作出应答?超出这个函数的范畴了
         }
     }
     //else
@@ -150,7 +154,7 @@ void AAIController_NPC::StopLanguageModelDrive()
     check(NPCManager);
     NPCManager->SetIsLanguageModelAvailable(true);
 
-    UE_LOG(LogAI, Warning, TEXT("AAIController_NPC::StopLanguageModelDrive"));
+    UE_LOG(LogAI, Log, TEXT("AAIController_NPC::StopLanguageModelDrive"));
     bIsUsingLanguageModel = false;
     if (NPCPerceptionComponent)
     {

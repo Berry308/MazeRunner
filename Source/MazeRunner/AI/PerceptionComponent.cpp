@@ -5,6 +5,8 @@
 #include "AI/CognitionComponent.h"
 #include "MazeRunnerLogChannels.h"
 #include "Perception/AISenseConfig_Sight.h"
+#include "Subsystems/GameInstanceSubsystem.h"
+#include "NPC/NPCManagerSubsystem.h"
 
 UPerceptionComponent::UPerceptionComponent(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
@@ -37,6 +39,7 @@ UPerceptionComponent::UPerceptionComponent(const FObjectInitializer& ObjectIniti
 bool UPerceptionComponent::ReceivePlayerMessageInputFromActor(AActor* Player, const FString& PlayerNickname, const FString& PlayerMessage)
 {
 	if (!bIsUseLanguageModel) return false;
+
 	const FString SenderName = !PlayerNickname.IsEmpty() ? PlayerNickname : TEXT("Unknown");
 
 	UE_LOG(LogAI, Log, TEXT("PerceptionComponent: Receiving player message input from %s"), *SenderName);
@@ -53,6 +56,13 @@ bool UPerceptionComponent::ReceivePlayerMessageInputFromActor(AActor* Player, co
 
 	DeliverMessageToCognition(PerceptionInfo);
 	return true;
+}
+
+bool UPerceptionComponent::ReceiveVisualInput(AActor* Instigator, const FString& VisualMessage)
+{
+	if (!bIsUseLanguageModel) return false;
+
+	return false;
 }
 
 void UPerceptionComponent::DeliverMessageToCognition(const FPerceptionInfo& PerceptionInfo)

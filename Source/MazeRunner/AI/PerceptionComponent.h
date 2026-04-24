@@ -65,6 +65,10 @@ public:
 	UFUNCTION(BlueprintCallable)
 	bool ReceivePlayerMessageInputFromActor(AActor* Player, const FString& PlayerNickname, const FString& PlayerMessage);
 
+	//接收视觉信息输入
+	UFUNCTION(BlueprintCallable)
+	bool ReceiveVisualInput(AActor* Instigator, const FString& VisualMessage);
+
 protected:
 	//将感知到的信息传递给Cognition组件
 	UFUNCTION(BlueprintCallable)

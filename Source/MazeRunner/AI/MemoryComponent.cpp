@@ -22,18 +22,29 @@ UMemoryComponent::UMemoryComponent(const FObjectInitializer& ObjectInitializer)
 void UMemoryComponent::BeginPlay()
 {
     Super::BeginPlay();
-    if (SaveSlotName.IsEmpty())
+    if (bUseLongTermMemory)
     {
-        UE_LOG(LogAI, Error, TEXT("UMemoryComponent 构造函数中 SaveSlotName 为空或不存在。"));
+        bUseShortTermMemory = true;
+        if (SaveSlotName.IsEmpty())
+        {
+            UE_LOG(LogAI, Error, TEXT("UMemoryComponent 构造函数中 SaveSlotName 为空或不存在。"));
+        }
+        LoadMemoryFromDisk(); // 游戏开始时尝试加载
     }
-    LoadMemoryFromDisk(); // 游戏开始时尝试加载
+    else if (bUseShortTermMemory)
+    {
+		LoadMemoryFromPreset(); // 直接从预设加载到当前记忆数据中
+    }
 }
 
 //Warn:我没有在结束游戏时对NPC的短期记忆进行保存，这里需要设计一个全局的管理系统用来处理退出游戏时的逻辑
 void UMemoryComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
     Super::EndPlay(EndPlayReason);
-	SaveMemoryToDisk(); // 游戏结束时保存当前记忆
+    if (bUseLongTermMemory)
+    {
+        SaveMemoryToDisk(); // 游戏结束时保存当前记忆
+    }
 }
 
 TArray<FMemoryLocationCognition> UMemoryComponent::GetLocationCognition() const
@@ -65,13 +76,25 @@ FString UMemoryComponent::GetSummarizedShortTermMemoryName()
 //添加信息到短期记忆中，根据触发条件选择是否总结短期记忆，并存储到长期记忆中
 void UMemoryComponent::AddShortTermMemory(FString MemoryDescription, FString ObjectName)
 {
-    //先判断是否需要总结当前的短期记忆
-    if (ObjectName != CurrentMemoryRelevantName || ShortTermMemories.Num() >= ShortTermMemoryCapacity)
+    if (bUseLongTermMemory)
     {
-        //对当前短期记忆进行总结
-        SummarizeShortTermMemories();
-        CurrentMemoryRelevantName = ObjectName;
+        //如果当前短期记忆关联者与新记忆关联者不同，或者当前短期记忆容量满了，都需要先总结当前的短期记忆
+        if (ObjectName != CurrentMemoryRelevantName || ShortTermMemories.Num() >= ShortTermMemoryCapacity)
+        {
+            //对当前短期记忆进行总结
+            SummarizeShortTermMemories();
+            CurrentMemoryRelevantName = ObjectName;
+        }
     }
+    else if (bUseShortTermMemory)
+    {
+        CurrentMemoryRelevantName = ObjectName;
+        if (ShortTermMemories.Num() == ShortTermMemoryCapacity)
+        {
+			ShortTermMemories.RemoveAt(0); // 移除最旧的记忆
+        }
+    }
+
 
     //总结完毕后再添加新的短期记忆
     ShortTermMemories.Emplace(MemoryDescription);
@@ -223,4 +246,23 @@ void UMemoryComponent::LoadMemoryFromDisk()
             UE_LOG(LogAI, Warning, TEXT("UMemoryComponent 没有设置 MemoryPreset，ActiveMemoryData 将是一个空对象"));
 		}
     }
+}
+
+void UMemoryComponent::LoadMemoryFromPreset()
+{
+    if (!ActiveMemoryData)
+    {
+        ActiveMemoryData = Cast<UNPCMemoryBase>(UGameplayStatics::CreateSaveGameObject(UNPCMemoryBase::StaticClass()));
+    }
+    if (MemoryPreset)
+    {
+        ActiveMemoryData->PersonalInfo = MemoryPreset->PersonalInfo;
+        ActiveMemoryData->CharacterRelationships = MemoryPreset->CharacterRelationships;
+        ActiveMemoryData->ObjectCognitions = MemoryPreset->ObjectCognitions;
+        ActiveMemoryData->LocationCognitions = MemoryPreset->LocationCognitions;
+    }
+    else
+    {
+        UE_LOG(LogAI, Warning, TEXT("UMemoryComponent 没有设置 MemoryPreset，无法加载记忆预设"));
+	}
 }

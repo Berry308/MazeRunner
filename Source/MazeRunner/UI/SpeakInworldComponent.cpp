@@ -29,7 +29,10 @@ USpeakInworldComponent::USpeakInworldComponent()
 void USpeakInworldComponent::BeginPlay()
 {
 	Super::BeginPlay();
-
+ //   if(InternalWidgetComp->GetWidgetClass() == nullptr)
+ //   {
+ //       UE_LOG(LogTemp, Warning, TEXT("SpeakInworldComponent: InternalWidgetComp has no WidgetClass set. Please assign a UserWidget Blueprint to it."));
+	//}
 }
 
 void USpeakInworldComponent::OnRegister()

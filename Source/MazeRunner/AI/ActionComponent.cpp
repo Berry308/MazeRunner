@@ -54,4 +54,6 @@ void UActionComponent::OnCurrentActionFinished()
 void UActionComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
     OnActionListEmpty.Clear();
+
+	Super::EndPlay(EndPlayReason);
 }

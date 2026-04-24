@@ -7,6 +7,7 @@
 #include "AI/ActionComponent.h"
 #include "AI/AIActionBase.h"
 #include "AI/NPC/NPCMemoryBase.h"
+#include "AI/NPC/NPCManagerSubsystem.h"
 #include "GameFramework/Pawn.h"
 #include "HttpModule.h"
 #include "Dom/JsonObject.h"
@@ -119,7 +120,7 @@ FString UCognitionComponent::ConstructPrompt(const FPerceptionInfo& PerceptionIn
                 *memory->PersonalInfo.Occupation,
                 *memory->PersonalInfo.Preferences
             );
-			//事物认知和地点认知暂时不加上，后续再根据需要添加
+			//TODO:事物认知和地点认知暂时不加上，后续再根据需要添加
             
 
             //根据当前环境信息变化的发起者(人或物)，搜索对应记忆模块存储的与发起者相关信息，构造提示词
@@ -249,6 +250,10 @@ FString UCognitionComponent::ConstructPromptForMemorySummary(const FString& Curr
 
 void UCognitionComponent::SendPromptToLocalModel(const FString& Prompt,int8 PromptType)
 {
+    UNPCManagerSubsystem* NPCManager = GetOwner()->GetGameInstance()->GetSubsystem<UNPCManagerSubsystem>();
+    check(NPCManager);
+    NPCManager->SetIsLanguageModelAvailable(false);
+
     UE_LOG(LogAI, Warning, TEXT("CognitionComponent: Sending cognition message to local model from %s"), *GetOwner()->GetName());
     UE_LOG(LogAI, Log, TEXT("Prompt:\n%s"), *Prompt);
 
@@ -303,6 +308,11 @@ void UCognitionComponent::OnActionResponseReceived(FHttpRequestPtr Request, FHtt
 {
     if (bWasSuccessful && Response.IsValid() && Response->GetResponseCode() == 200)
     {
+        //释放模型资源
+        UNPCManagerSubsystem* NPCManager = GetOwner()->GetGameInstance()->GetSubsystem<UNPCManagerSubsystem>();
+		check(NPCManager);
+        NPCManager->SetIsLanguageModelAvailable(true);
+
         //计算从请求发出到收到响应的时间差，以评估模型响应时间
         double* StartTimePtr = RequestStartTimes.Find(Request.Get());
         if (StartTimePtr)
@@ -339,6 +349,10 @@ void UCognitionComponent::OnSinglePerceptMemoryResponseReceived(FHttpRequestPtr 
 {
     if (bWasSuccessful && Response.IsValid() && Response->GetResponseCode() == 200)
     {
+        UNPCManagerSubsystem* NPCManager = GetOwner()->GetGameInstance()->GetSubsystem<UNPCManagerSubsystem>();
+        check(NPCManager);
+        NPCManager->SetIsLanguageModelAvailable(true);
+
         double* StartTimePtr = RequestStartTimes.Find(Request.Get());
         if (StartTimePtr)
         {
@@ -370,6 +384,10 @@ void UCognitionComponent::OnShortTermMemorySummaryResponseReceived(FHttpRequestP
 {
     if (bWasSuccessful && Response.IsValid() && Response->GetResponseCode() == 200)
     {
+        UNPCManagerSubsystem* NPCManager = GetOwner()->GetGameInstance()->GetSubsystem<UNPCManagerSubsystem>();
+        check(NPCManager);
+        NPCManager->SetIsLanguageModelAvailable(true);
+
         double* StartTimePtr = RequestStartTimes.Find(Request.Get());
         if (StartTimePtr)
         {
