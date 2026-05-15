@@ -50,10 +50,10 @@ public:
     bool bKeepUsingLanguageModel = false;
 
 protected:
-    UPROPERTY()
+    UPROPERTY(VisibleAnywhere)
     TObjectPtr<UPerceptionComponent> NPCPerceptionComponent;
 
-    UPROPERTY()
+    UPROPERTY(VisibleAnywhere)
     TObjectPtr<UActionComponent> NPCActionComponent;
 
     //当玩家进入到NPC的感知范围内时，需要经过一段时间才会启用语言模型切换

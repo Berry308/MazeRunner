@@ -12,7 +12,8 @@
 				"ModularGameplay",
 				"Engine",
 				"ModularGameplayActors",
-				"AIModule"
+				"AIModule",
+				"UMG"
 			]
 		}
 	],
@@ -43,6 +44,10 @@
 		},
 		{
 			"Name": "PlayerCore",
+			"Enabled": true
+		},
+		{
+			"Name": "ModelViewViewModel",
 			"Enabled": true
 		}
 	]

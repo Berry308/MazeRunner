@@ -12,6 +12,7 @@
 #include "Serialization/JsonSerializer.h"
 #include "Kismet/GameplayStatics.h"
 #include "MazeRunnerLogChannels.h"
+#include "System/MRAssetManager.h"
 
 UMemoryComponent::UMemoryComponent(const FObjectInitializer& ObjectInitializer)
     : Super(ObjectInitializer)
@@ -31,9 +32,9 @@ void UMemoryComponent::BeginPlay()
         }
         LoadMemoryFromDisk(); // 游戏开始时尝试加载
     }
-    else if (bUseShortTermMemory)
+    else
     {
-		LoadMemoryFromPreset(); // 直接从预设加载到当前记忆数据中
+		AsyncLoadMemoryPreset(); // 直接从预设加载到当前记忆数据中
     }
 }
 
@@ -225,44 +226,63 @@ void UMemoryComponent::LoadMemoryFromDisk()
     }
     else
     {
-        UE_LOG(LogAI, Warning, TEXT("SaveSlotName:%s does not exist"), *SaveSlotName);
+        UE_LOG(LogAI, Log, TEXT("SaveSlotName:%s does not exist"), *SaveSlotName);
+        // 如果没有存档，则创建一个新的空对象，并将记忆预设注入
+        AsyncLoadMemoryPreset();
     }
+}
 
+void UMemoryComponent::AsyncLoadMemoryPreset()
+{
+	//UE_LOG(LogAI, Log, TEXT("UMemoryComponent::AsyncLoadMemoryPreset called"));
     // 如果没有存档，则创建一个新的空对象，并将记忆预设注入
     if (!ActiveMemoryData)
     {
+        UE_LOG(LogAI, Log, TEXT("UMemoryComponent::ActiveMemoryData is null"));
         ActiveMemoryData = Cast<UNPCMemoryBase>(UGameplayStatics::CreateSaveGameObject(UNPCMemoryBase::StaticClass()));
-        if(MemoryPreset)
+        // 1. 如果路径根本没设置，直接退出
+        if (MemoryPreset.IsNull())
+        {
+            UE_LOG(LogAI, Warning, TEXT("MemoryPreset is NULL! Please assign asset in Editor."));
+            return;
+        }
+        if (MemoryPreset.IsValid()) // 是否指向一个有效路径，且该资产目前正处于磁盘上，尚未加载到内存中
+        {
+            //UE_LOG(LogAI, Warning, TEXT("UMemoryComponent::MemoryPreset.IsPending called"));
+            FStreamableManager& Streamable = UAssetManager::GetStreamableManager();
+			// 异步加载 DataAsset 本身，不对其句柄进行保存，因为我们只需要在加载完成的回调中使用它一次，在回调函数完成后，就会自动被GC回收掉
+            Streamable.RequestAsyncLoad(MemoryPreset.ToSoftObjectPath(), FStreamableDelegate::CreateUObject(this, &UMemoryComponent::OnMemoryPresetLoaded));
+        }
+
+        //记忆预设不用软引用持有时的代码
+        /*if (MemoryPreset)
         {
             // 这里可以添加将 MemoryPreset 中的数据复制到 ActiveMemoryData 的逻辑
-			ActiveMemoryData->PersonalInfo = MemoryPreset->PersonalInfo;
-			ActiveMemoryData->CharacterRelationships = MemoryPreset->CharacterRelationships;
-			ActiveMemoryData->ObjectCognitions = MemoryPreset->ObjectCognitions;
-			ActiveMemoryData->LocationCognitions = MemoryPreset->LocationCognitions;
+            ActiveMemoryData->AsyncLoadMemoryPreset(MemoryPreset);
             UE_LOG(LogAI, Log, TEXT("NPC 记忆预设已加载到内存组件"));
         }
         else
         {
             UE_LOG(LogAI, Warning, TEXT("UMemoryComponent 没有设置 MemoryPreset，ActiveMemoryData 将是一个空对象"));
-		}
+        }*/
     }
 }
 
-void UMemoryComponent::LoadMemoryFromPreset()
+void UMemoryComponent::OnMemoryPresetLoaded()
 {
-    if (!ActiveMemoryData)
+	//UE_LOG(LogAI, Log, TEXT("UMemoryComponent::OnMemoryPresetLoaded called"));
+    if (MemoryPreset.IsValid())
     {
-        ActiveMemoryData = Cast<UNPCMemoryBase>(UGameplayStatics::CreateSaveGameObject(UNPCMemoryBase::StaticClass()));
-    }
-    if (MemoryPreset)
-    {
-        ActiveMemoryData->PersonalInfo = MemoryPreset->PersonalInfo;
-        ActiveMemoryData->CharacterRelationships = MemoryPreset->CharacterRelationships;
-        ActiveMemoryData->ObjectCognitions = MemoryPreset->ObjectCognitions;
-        ActiveMemoryData->LocationCognitions = MemoryPreset->LocationCognitions;
-    }
-    else
-    {
-        UE_LOG(LogAI, Warning, TEXT("UMemoryComponent 没有设置 MemoryPreset，无法加载记忆预设"));
+        UNPCMemoryPreset* LoadedPreset = MemoryPreset.Get();
+        if (LoadedPreset)
+        {
+			ActiveMemoryData->LoadMemoryPreset(LoadedPreset);
+            UE_LOG(LogAI, Log, TEXT("NPC 记忆预设已异步加载到内存组件"));
+        }
+        else
+        {
+            UE_LOG(LogAI, Warning, TEXT("UMemoryComponent 无法加载 MemoryPreset，ActiveMemoryData 将是一个空对象"));
+        }
 	}
 }
+

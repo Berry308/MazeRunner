@@ -81,13 +81,19 @@ struct FMemoryLocationCognition
 };
 
 /**
- * 
+ * NPC运行时记忆数据
  */
+
+class UNPCMemoryPreset;
+
 UCLASS()
 class MAZERUNNER_API UNPCMemoryBase : public USaveGame
 {
 	GENERATED_BODY()
-	
+public:
+	//提供一个接口函数，用于从预设数据资产中加载记忆数据
+	void LoadMemoryPreset(const UNPCMemoryPreset* Preset);
+
 public:
     //个人信息
 	UPROPERTY(VisibleAnywhere, Category = "Memory")
@@ -104,4 +110,13 @@ public:
     //地点认知
     UPROPERTY(VisibleAnywhere, Category = "Memory")
     TMap<FString, FMemoryLocationCognition> LocationCognitions;
+
+    /*以下是推理游戏用到的成员*/
+    //NPC知道的信息
+    UPROPERTY(EditAnywhere, Category = "DeductionGame")
+    TArray<FString> KnownInformation;
+
+    //NPC在案件中扮演的角色
+    UPROPERTY(EditAnywhere, Category = "DeductionGame")
+    FString RoleInCase;
 };

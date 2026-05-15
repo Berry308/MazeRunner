@@ -20,14 +20,8 @@ public:
 	// Sets default values for this component's properties
 	UDetectionComponent();
 
+	UFUNCTION(BlueprintPure, Category = "Interactable Detection")
     static UDetectionComponent* FindDetectionComponent(AActor* Actor) { return Actor ? Actor->FindComponentByClass<UDetectionComponent>() : nullptr; }
-
-    // 事件委托
-    UPROPERTY(BlueprintAssignable, Category = "Interactable Detection")
-    FOnInteractableListUpdated OnInteractableListUpdated;
-
-    UPROPERTY(BlueprintAssignable, Category = "Interactable Detection")
-    FOnSelectedIndexChanged OnSelectedIndexChanged;
 
     // 切换选中目标，bForward=true向后，false向前循环
     UFUNCTION(BlueprintCallable, Category = "Interactable Detection")
@@ -37,9 +31,28 @@ public:
     UFUNCTION(BlueprintCallable, Category = "Interactable Detection")
     AActor* GetCurrentInteractable() const;
 
+	UFUNCTION(BlueprintCallable, Category = "Interactable Detection")
+    void SetIsDetecting(bool bDetecting);
+
+protected:
+    virtual void BeginPlay() override;
+
+    // 定时扫描执行函数
+    void ScanForInteractables();
+
+    bool CanInteractWith(AActor* SourceActor, AActor* TargetToInteract) const;
+
+public:
+    // 事件委托
+    UPROPERTY(BlueprintAssignable, Category = "Interactable Detection")
+    FOnInteractableListUpdated OnInteractableListUpdated;
+
+    UPROPERTY(BlueprintAssignable, Category = "Interactable Detection")
+    FOnSelectedIndexChanged OnSelectedIndexChanged;
+
     // 扫描半径
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interactable Detection")
-    float ScanRadius = 300.f;
+    float ScanRadius = 100.f;
 
     // 扫描间隔(秒)
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interactable Detection")
@@ -53,14 +66,8 @@ public:
     UPROPERTY(BlueprintReadOnly, Category = "Interactable Detection")
     int32 SelectedIndex = 0;
 
-protected:
-    virtual void BeginPlay() override;
-
-    // 定时扫描执行函数
-    void ScanForInteractables();
-
-    bool CanInteractWith(AActor* SourceActor, AActor* TargetToInteract) const;
-
 private:
     FTimerHandle ScanTimerHandle;
+
+	bool bIsDetecting = true;
 };

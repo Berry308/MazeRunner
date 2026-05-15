@@ -14,6 +14,7 @@
 void AAIController_NPC::OnPossess(APawn* InPawn)
 {
     Super::OnPossess(InPawn);
+	UE_LOG(LogAI, Log, TEXT("AAIController_NPC::OnPossess, possessed pawn: %s"), *InPawn->GetName());
     if (DefaultBehaviorTree)
     {
         // 启动行为树（会自动初始化黑板）
@@ -23,9 +24,17 @@ void AAIController_NPC::OnPossess(APawn* InPawn)
     {
         NPCPerceptionComponent->OnTargetPerceptionUpdated.AddDynamic(this, &AAIController_NPC::OnPerceptionUpdate);
     }
+    else
+    {
+		UE_LOG(LogAI, Error, TEXT("AAIController_NPC::OnPossess: PerceptionComponent not found on %s"), *InPawn->GetName());
+    }
     if (NPCActionComponent = UActionComponent::FindActionComponent(InPawn))
     {
         NPCActionComponent->OnActionListEmpty.AddDynamic(this, &AAIController_NPC::RestartBehaviorTree);
+    }
+    else
+    {
+		UE_LOG(LogAI, Error, TEXT("AAIController_NPC::OnPossess: ActionComponent not found on %s"), *InPawn->GetName());
     }
 
     SetPerceptionComponent(*NPCPerceptionComponent);

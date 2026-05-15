@@ -61,9 +61,9 @@ public:
 
 #pragma region LanguageModelDrive
 public:
-	//接收带发起者信息的玩家消息：在发起者销毁后仍能追溯交互来源
+	//接收带发起者信息的玩家消息：在发起者销毁后仍能追溯交互来源。Option:0-正常玩家消息输入，1-推理游戏中的玩家消息输入（需要构造特殊提示词）
 	UFUNCTION(BlueprintCallable)
-	bool ReceivePlayerMessageInputFromActor(AActor* Player, const FString& PlayerNickname, const FString& PlayerMessage);
+	bool ReceivePlayerMessageInputFromActor(AActor* Player, const FString& PlayerNickname, const FString& PlayerMessage,int Option);
 
 	//接收视觉信息输入
 	UFUNCTION(BlueprintCallable)
@@ -72,7 +72,7 @@ public:
 protected:
 	//将感知到的信息传递给Cognition组件
 	UFUNCTION(BlueprintCallable)
-	void DeliverMessageToCognition(const FPerceptionInfo& PerceptionInfo);
+	void DeliverMessageToCognition(const FPerceptionInfo& PerceptionInfo, int Option);
 
 private:
 	bool bIsUseLanguageModel=false;

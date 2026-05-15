@@ -17,10 +17,19 @@ void UDetectionComponent::BeginPlay()
 {
 	Super::BeginPlay();
 
-	// 启动定时器周期调用ScanForInteractables
-	if (GetWorld())
+	//延迟启用检测，避免一些潜在的初始化问题
+	if (GetWorld() && bIsDetecting)
 	{
-		GetWorld()->GetTimerManager().SetTimer(ScanTimerHandle, this, &UDetectionComponent::ScanForInteractables, ScanInterval, true);
+		FTimerHandle temphandle;
+		float DelayTime = 1.f; // 延迟时间，根据需要调整
+		GetWorld()->GetTimerManager().SetTimer(
+			temphandle, [this]()
+			{
+				// 直接在这里调用带参数的函数
+				this->SetIsDetecting(true);
+			}, DelayTime, false
+		);
+		;
 	}
 }
 
@@ -110,4 +119,22 @@ AActor* UDetectionComponent::GetCurrentInteractable() const
 		return CurrentInteractables[SelectedIndex];
 	}
 	return nullptr;
+}
+
+// 启动定时器周期调用ScanForInteractables
+void UDetectionComponent::SetIsDetecting(bool bDetecting)
+{
+	bIsDetecting = bDetecting;
+	UE_LOG(LogTemp, Log, TEXT("SetIsDetecting: %s"), bDetecting ? TEXT("true") : TEXT("false"));
+	if (!bIsDetecting && GetWorld()) 
+	{ 
+		GetWorld()->GetTimerManager().ClearTimer(ScanTimerHandle); 
+	} 
+	else if (bIsDetecting && GetWorld()) 
+	{ 
+		GetWorld()->GetTimerManager().SetTimer(
+			ScanTimerHandle, this, 
+			&UDetectionComponent::ScanForInteractables, 
+			ScanInterval, true); 
+	} 
 }

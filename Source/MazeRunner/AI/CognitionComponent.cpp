@@ -30,7 +30,7 @@ void UCognitionComponent::BeginPlay()
     MemoryComponent = UMemoryComponent::FindMemoryComponent(GetOwner());
 }
 
-void UCognitionComponent::ReceivePerceptionMessage(const FPerceptionInfo& PerceptionInfo)
+void UCognitionComponent::ReceivePerceptionMessage(const FPerceptionInfo& PerceptionInfo, int option)
 {
     if (PerceptionInfo.Receiver != GetOwner())
     {
@@ -44,7 +44,17 @@ void UCognitionComponent::ReceivePerceptionMessage(const FPerceptionInfo& Percep
     {
         MemoryComponent->SetCurrentInteractType(PerceptionInfo.Instigator);
 	}
-    AnalyzePerceptionMessage(PerceptionInfo);
+
+    switch (option)
+    {
+        case 0:
+            AnalyzePerceptionMessage(PerceptionInfo);
+			break;
+        case 1:
+			AnalyzePerceptionMessageForDeductionGame(PerceptionInfo);
+            break;
+    }
+    
 }
 
 void UCognitionComponent::AnalyzePerceptionMessage(const FPerceptionInfo& PerceptionInfo)
@@ -67,6 +77,15 @@ bool UCognitionComponent::FilterPerceptionMessage(const FPerceptionInfo& Percept
     UE_LOG(LogAI, Log, TEXT("CognitionComponent: Filtering perception message from %s"), *SenderName);
 
     return true;
+}
+
+void UCognitionComponent::AnalyzePerceptionMessageForDeductionGame(const FPerceptionInfo& PerceptionInfo)
+{
+    const FString SenderName = !PerceptionInfo.InstigatorName.IsEmpty() ? PerceptionInfo.InstigatorName : TEXT("Unknown");
+	UE_LOG(LogAI, Log, TEXT("CognitionComponent: Analyzing perception message for deduction game from %s"), *SenderName);
+
+	FString Prompt = ConstructPromptForDeductionGame(PerceptionInfo.Message);
+	SendPromptToLocalModel(Prompt, 1);
 }
 
 FString UCognitionComponent::ConstructMessageFromPerception(const FPerceptionInfo& PerceptionInfo)
@@ -248,6 +267,128 @@ FString UCognitionComponent::ConstructPromptForMemorySummary(const FString& Curr
     return Prompt;
 }
 
+FString UCognitionComponent::ConstructPromptForDeductionGame(const FString& PlayerMessage)
+{
+    //默认应答约束
+    FString Prompt;
+    Prompt.Reserve(300);
+
+    // ========== 1. 角色与核心规则 (开头强调) ==========
+    Prompt += TEXT("【前提】\n你是一个游戏NPC，发生了刑事案件，警察正在询问你一些信息。\n");
+    //Prompt += TEXT("1. 你只能从【行为列表】中选择一个行为。\n");
+    //Prompt += TEXT("2. 你的回答**必须**是一个合法的JSON对象，不包含任何其他文字。\n");
+    //Prompt += TEXT("3. JSON的格式必须完全参照【输出示例】。\n\n");
+
+    // ========== 2. NPC背景与记忆 (记忆优先) ==========
+    //获取记忆模块存储的数据，包括与当前环境信息变化的发起者相关的数据，以及与NPC自身相关的数据，事物和地点认知暂时不加上
+    const UNPCMemoryBase* memory;
+    if (MemoryComponent)
+    {
+        memory = MemoryComponent->GetActiveMemoryData();
+		check(memory);
+
+        if (memory != nullptr)
+        {
+            CurrentRelevantMemory = TEXT("【你的角色背景设定】\n");
+
+            /*CurrentRelevantMemory.Appendf(TEXT("-姓名:%s\n-性格:%s\n-职业:%s\n-喜好:%s\n"),
+                *memory->PersonalInfo.Name,
+                *memory->PersonalInfo.Personality,
+                *memory->PersonalInfo.Occupation,
+                *memory->PersonalInfo.Preferences
+            );*/
+
+            CurrentRelevantMemory.Appendf(TEXT("-姓名:%s\n-性格:%s\n-职业:%s\n"),
+                *memory->PersonalInfo.Name,
+                *memory->PersonalInfo.Personality,
+                *memory->PersonalInfo.Occupation
+            );
+
+            CurrentRelevantMemory += TEXT("【你的人际关系】\n");
+            for (const auto& RelationshipPair : memory->CharacterRelationships)
+            {
+				const FMemoryCharacterRelationship& Relationship = RelationshipPair.Value;
+                CurrentRelevantMemory.Appendf(TEXT("%s是你的%s"), *Relationship.OtherCharacterName, *Relationship.RelationshipType);
+                if (Relationship.Memories.Num() > 0)
+                {
+                    CurrentRelevantMemory += TEXT(",你们共同经历过的事情有：\n");
+                    for (const FMemoryEvent& Event : Relationship.Memories)
+                    {
+                        CurrentRelevantMemory.Appendf(TEXT("-%s。\n"), *Event.Content);
+                    }
+                }
+            }
+
+            CurrentRelevantMemory += TEXT("【你知道的信息】\n");
+            for (const auto& Infor : memory->KnownInformation)
+            {
+				CurrentRelevantMemory.Appendf(TEXT("-%s\n"), *Infor);
+            }
+
+            CurrentRelevantMemory += TEXT("【你在这起案件中扮演的角色】\n");
+			CurrentRelevantMemory.Appendf(TEXT("%s\n"), *memory->RoleInCase);
+
+			//短期记忆暂时不加上，后续再根据需要添加
+            /*TArray<FString> ShortTermMemories = MemoryComponent->GetShortTermMemory();
+            if (!ShortTermMemories.IsEmpty())
+            {
+                CurrentRelevantMemory += TEXT("【你最近的记忆信息】\n");
+                for (FString s : ShortTermMemories)
+                {
+                    CurrentRelevantMemory.Appendf(TEXT("-%s\n"), *s);
+                }
+            }*/
+        }
+    }
+    Prompt += CurrentRelevantMemory;
+
+    UActionComponent* ActionComponent = UActionComponent::FindActionComponent(GetOwner());
+	check(ActionComponent);
+    // ========== 行为列表 ==========暂不提供除了说话外的其它行为选项
+    /*Prompt += TEXT("【行为列表】\n");
+    const TArray<FAIActionInfo>& AllActionInfos = ActionComponent->GetAllowedActionInfor();
+    for (const FAIActionInfo& ActionInfo : AllActionInfos)
+    {
+        // 明确列出 行为名 和 参数名，并单独给出描述
+        Prompt.Appendf(TEXT("- 行为：%s\n"), *ActionInfo.ActionName);
+        if (!ActionInfo.Description.IsEmpty())
+        {
+            Prompt.Appendf(TEXT("  描述：%s\n"), *ActionInfo.Description);
+        }
+        for (const FAIActionInfoField& Field : ActionInfo.Fields)
+        {
+            Prompt.Appendf(TEXT("  参数名：%s\n"), *Field.FieldName);
+            if (!Field.Description.IsEmpty())
+            {
+                Prompt.Appendf(TEXT("  参数描述：%s\n"), *Field.Description);
+            }
+        }
+    }*/
+
+    Prompt += TEXT("【警察对你说的话】\n");
+	Prompt.Appendf(TEXT("%s\n"), *PlayerMessage);
+
+    // ========== 3. 输出格式与示例 (关键部分，清晰且紧跟示例) ==========
+    Prompt += TEXT("【输出格式要求】\n");
+    Prompt += TEXT("你的回答必须是纯JSON，格式如下：\n");
+    Prompt += TEXT("{\"ActionName\": \"Talk\", \"Speak\": \"[你生成的内容]\"}\n\n");
+
+    // *** 提供1-2个完整的、简化的示例 ***
+    /*Prompt += TEXT("【输出示例】\n");
+    Prompt += TEXT("假设行为列表中有：\n");
+    Prompt += TEXT("- 行为：Talk\n  参数名：Speak\n");
+    Prompt += TEXT("- 行为：Walk\n  参数名：TargetLocation\n");
+    Prompt += TEXT("假设你选择Talk，并且想说“你好”。\n");
+    Prompt += TEXT("那么你的回答应该是：\n");
+    Prompt += TEXT("{\"ActionName\": \"Talk\", \"Speak\": \"你好\"}\n\n");*/
+
+    // ========== 4. 最终指令 (结尾重复规则) ==========
+    Prompt += TEXT("【现在开始】\n");
+    Prompt += TEXT("请根据以上所有信息，生成一个最合理的应答，并只输出一个JSON对象。\n");
+
+    return Prompt;
+}
+
 void UCognitionComponent::SendPromptToLocalModel(const FString& Prompt,int8 PromptType)
 {
     UNPCManagerSubsystem* NPCManager = GetOwner()->GetGameInstance()->GetSubsystem<UNPCManagerSubsystem>();
@@ -271,10 +412,11 @@ void UCognitionComponent::SendPromptToLocalModel(const FString& Prompt,int8 Prom
 
     // 创建并填充 options 对象
     TSharedPtr<FJsonObject> OptionsObject = MakeShareable(new FJsonObject);
-    OptionsObject->SetNumberField("temperature", 0.1);   // 低温度，提高确定性
-    OptionsObject->SetNumberField("top_k", 10);          // 限制候选词数量
-    OptionsObject->SetNumberField("top_p", 0.9);         // 核采样阈值
-    OptionsObject->SetNumberField("num_predict", 128);   // 限制最大生成长度（可选）
+    OptionsObject->SetNumberField("temperature", Temperature);   // 低温度，提高确定性
+    OptionsObject->SetNumberField("top_k", TopK);          // 限制候选词数量
+    OptionsObject->SetNumberField("top_p", TopP);         // 核采样阈值
+    OptionsObject->SetNumberField("num_predict", MaxTokens);   // 限制最大生成长度（可选）
+    OptionsObject->SetBoolField("disable_thinking", bDisableThinking);   // 取消模型的思考功能
 
     // 将 options 对象设置为根对象的字段
     JsonObject->SetObjectField("options", OptionsObject);
@@ -335,8 +477,11 @@ void UCognitionComponent::OnActionResponseReceived(FHttpRequestPtr Request, FHtt
                 ActionComponent->AddActionToQueue(ActionToAdd);
             }
             //将模型的应答再与先前的环境信息结合，然后发送给模型做记忆信息总结
-            FString MemoryPrompt = ConstructPromptForMemorySummary(ConstructMessageFromPerception(CurrentPerception), InnerResponseText);
-            SendPromptToLocalModel(MemoryPrompt, 2);
+            if (bEnableShortTermMemory)
+            {
+                FString MemoryPrompt = ConstructPromptForMemorySummary(ConstructMessageFromPerception(CurrentPerception), InnerResponseText);
+                SendPromptToLocalModel(MemoryPrompt, 2);
+            }
         }
     }
     else

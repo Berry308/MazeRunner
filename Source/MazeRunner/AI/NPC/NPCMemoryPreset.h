@@ -31,4 +31,13 @@ public:
     //地点认知
     UPROPERTY(EditAnywhere, Category = "Memory")
     TMap<FString, FMemoryLocationCognition> LocationCognitions;
+
+    /*以下是推理游戏用到的成员*/
+    //NPC知道的信息
+	UPROPERTY(EditAnywhere, Category = "DeductionGame")
+	TArray<FString> KnownInformation;
+
+	//NPC在案件中扮演的角色
+	UPROPERTY(EditAnywhere, Category = "DeductionGame")
+	FString RoleInCase;
 };

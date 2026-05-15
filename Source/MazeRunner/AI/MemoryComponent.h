@@ -46,8 +46,11 @@ public:
     // 从磁盘加载记忆到内存
     UFUNCTION(BlueprintCallable, Category = "Memory")
     void LoadMemoryFromDisk();
+	//异步加载记忆预设到内存
     UFUNCTION(BlueprintCallable, Category = "Memory")
-	void LoadMemoryFromPreset();
+	void AsyncLoadMemoryPreset();
+
+    void OnMemoryPresetLoaded();
 
     //添加记忆信息的函数
     void AddShortTermMemory(FString MemoryDescription,FString ObjectName);
@@ -83,7 +86,7 @@ public:
 
     //记忆预设（内存优化、初始化速度优化：在第一次运行时才会注入预设，所以这个成员在后续的运行中都用不到，但是仍然会占用内存，后续可以通过软引用优化）
     UPROPERTY(EditAnywhere, Category = "Memory|Setup")
-    UNPCMemoryPreset* MemoryPreset;
+    TSoftObjectPtr<UNPCMemoryPreset> MemoryPreset;
 
 protected:
     UPROPERTY()

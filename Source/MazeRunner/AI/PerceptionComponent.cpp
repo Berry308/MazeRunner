@@ -36,7 +36,7 @@ UPerceptionComponent::UPerceptionComponent(const FObjectInitializer& ObjectIniti
 	//}
 }
 
-bool UPerceptionComponent::ReceivePlayerMessageInputFromActor(AActor* Player, const FString& PlayerNickname, const FString& PlayerMessage)
+bool UPerceptionComponent::ReceivePlayerMessageInputFromActor(AActor* Player, const FString& PlayerNickname, const FString& PlayerMessage, int Option)
 {
 	if (!bIsUseLanguageModel) return false;
 
@@ -54,7 +54,7 @@ bool UPerceptionComponent::ReceivePlayerMessageInputFromActor(AActor* Player, co
 	PerceptionInfo.Sense = ESense::Hearing;
 	PerceptionInfo.Message = PlayerMessage;
 
-	DeliverMessageToCognition(PerceptionInfo);
+	DeliverMessageToCognition(PerceptionInfo,Option);
 	return true;
 }
 
@@ -65,13 +65,13 @@ bool UPerceptionComponent::ReceiveVisualInput(AActor* Instigator, const FString&
 	return false;
 }
 
-void UPerceptionComponent::DeliverMessageToCognition(const FPerceptionInfo& PerceptionInfo)
+void UPerceptionComponent::DeliverMessageToCognition(const FPerceptionInfo& PerceptionInfo,int Option)
 {
 	UE_LOG(LogAI, Log, TEXT("Delivering message to cognition from %s: %s"), *PerceptionInfo.InstigatorName, *PerceptionInfo.Message);
 	UCognitionComponent* CognitionComponent = UCognitionComponent::FindCognitionComponent(PerceptionInfo.Receiver);
 	if (CognitionComponent)
 	{
-		CognitionComponent->ReceivePerceptionMessage(PerceptionInfo);
+		CognitionComponent->ReceivePerceptionMessage(PerceptionInfo,Option);
 	}
 }
 
